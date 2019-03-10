@@ -1,18 +1,12 @@
 import numpy as np
-from matplotlib.pylab import scatter
 import random
 from plyfile import PlyData, PlyElement
 import matplotlib.pyplot as plt
-from pylab import scatter
-from matplotlib import pyplot
 from mpl_toolkits.mplot3d import Axes3D
-import time
 from pyntcloud import PyntCloud
 import os
 import sys
-import itertools
 import re
-
 
 def shuffle_data(training_data):
      np.random.shuffle(training_data)
@@ -63,7 +57,6 @@ def load_data_table(number_points,reduction_step):
     print(len(training_data))
     print("data loaded")
     training_data = np.asarray(training_data)
-    print(training_data.shape)
     print("getting Trainingdata into the right format")
     #training_data = training_data.reshape(8509,3072)
     print(training_data.shape)

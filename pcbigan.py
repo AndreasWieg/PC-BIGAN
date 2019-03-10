@@ -29,11 +29,11 @@ class PCBIGAN(object):
 		self.lam_gp = 10
 		self.build_network()
 
-		print("d_optim")
+
 		with tf.variable_scope("adam",reuse=tf.AUTO_REUSE) as scope:
-			print("d_optim")
+			print("init_d_optim")
 			self.g_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1).minimize(self.g_loss,var_list = self.vars_G_E)
-			print("g_optim")
+			print("init_g_optim")
 			self.d_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1).minimize(self.d_loss,var_list = self.vars_D)
 
 		self.init  = tf.global_variables_initializer()
@@ -56,11 +56,11 @@ class PCBIGAN(object):
 	def generator(self,x):
 		with tf.variable_scope("generator") as scope:
 			x = tf.layers.dense(x, 128, activation=tf.nn.leaky_relu,name= "gen_1")
-			x = tf.layers.dense(x, 256, activation=None,name= "gen_2")
-			x = tf.layers.dense(x, 512, activation=None,name= "gen_3")
-			x = tf.layers.dense(x, 1024, activation=None,name= "gen_4")
-			x = tf.layers.dense(x, 2048, activation=None,name= "gen_5")
-			x = tf.layers.dense(x, 3084, activation=None,name= "gen_6")
+			x = tf.layers.dense(x, 256, activation=tf.nn.leaky_relu,name= "gen_2")
+			x = tf.layers.dense(x, 512, activation=tf.nn.leaky_relu,name= "gen_3")
+			x = tf.layers.dense(x, 1024, activation=tf.nn.leaky_relu,name= "gen_4")
+			x = tf.layers.dense(x, 2048, activation=tf.nn.leaky_relu,name= "gen_5")
+			x = tf.layers.dense(x, 3084, activation=None,kernel_initializer = tf.constant_initializer(0.2),name= "gen_6")
 			x = tf.reshape(x,[-1,1028,3])
 		return x
 
@@ -70,8 +70,12 @@ class PCBIGAN(object):
 			if reuse:
 				scope.reuse_variables()
 			y = tf.layers.conv1d(y,filters = 64,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu)
+			y = tf.layers.conv1d(y,filters = 128,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu)
+			y = tf.layers.conv1d(y,filters = 256,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu)
+			y = tf.layers.conv1d(y,filters = 64,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu)
+			y = tf.layers.dense(y, 1028,activation=tf.nn.leaky_relu, name="conv_2last")
 			y = tf.layers.dense(y, 128,activation=tf.nn.leaky_relu, name="conv_1last")
-			y = tf.layers.dense(y, 1, activation=tf.nn.softmax,name="conv_last")
+			y = tf.layers.dense(y, 1, activation=tf.nn.sigmoid,name="conv_last")
 		return y
 
 	def build_network(self):
