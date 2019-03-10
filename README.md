@@ -7,3 +7,7 @@ Implementation of BIGAN for pointclouds using Wasserstein Metric + Gradient pena
 # Dataset
 
 shapenet Dataset: https://www.shapenet.org/
+
+```
+download
+```
