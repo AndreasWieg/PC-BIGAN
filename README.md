@@ -2,7 +2,7 @@
 
 BIGAN from https://arxiv.org/abs/1605.09782
 
-Implementation of BIGAN for pointclouds using Wasserstein Metric + Gradient penalty of https://arxiv.org/pdf/1704.00028.pdf
+Implementation of BIGAN for pointclouds
 
 ## Dataset
 
@@ -11,3 +11,5 @@ shapenet Dataset: https://www.shapenet.org/
 ```
 download
 ```
+## Goal
+getting latent representation of poinclouds for further processing like pointcloud reconstruction
