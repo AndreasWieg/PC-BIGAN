@@ -13,3 +13,6 @@ download
 ```
 ## Goal
 getting latent representation of poinclouds for further processing like pointcloud reconstruction
+
+## To do
+implement 1d_conv_transpose Layer in the generator
