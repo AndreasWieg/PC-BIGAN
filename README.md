@@ -2,7 +2,7 @@
 
 BIGAN from https://arxiv.org/abs/1605.09782
 
-Implementation of BIGAN for pointclouds
+Implementation of BIGAN for pointclouds. Still work in progress. 
 
 ## Dataset
 
