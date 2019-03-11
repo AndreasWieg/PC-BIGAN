@@ -141,8 +141,7 @@ class PCBIGAN(object):
 			print(len(self.training_data))
 			for e in range(0,self.epoch):
 				epoch_loss_d = 0.
-				epoch_loss_g = 0.
-				print("data shuffeld")
+				epoch_loss_g = 0.				
 				self.training_data = shuffle_data(self.training_data)
 				for i in range(0,k):
 					self.batch_z = np.random.uniform(0, 0.2, [self.batch_size, self.z_dim])
@@ -161,13 +160,18 @@ class PCBIGAN(object):
 				print("Epoch%d" %(e))
 
 
-				'''
+				test_counter = 0
 				if e % 100 == 0:
 					#save_path = self.saver.save(sess,"C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/checkpoint/model.ckpt",global_step=e)
 					#print("model saved: %s" %save_path)
 					self.gen_noise = np.random.uniform(0, 0.2, [1, self.z_dim])
-					test_table = sess.run([self.Gen], feed_dict={self.z: self.gen_noise})
-					save_pointcloud(test_table,self.number_prog,self.table_fake, self.growth[-1])
-					print("created fake_test_leaf")
-				'''
+					code = sess.run([self.Enc], feed_dict={self.input: [self.batch[0]]})
+					code = np.asarray(code)
+					print(code.shape)
+					code = np.reshape(code,(1,128))
+					generator_output = sess.run([self.Gen], feed_dict={self.z: code})
+					save_pointcloud(self.batch[0],test_counter,"input_encoder", self.pointcloud_dim)
+					save_pointcloud(generator_output,test_counter,"encoder_encoder", self.pointcloud_dim)
+					print("created test_data")
+					test_counter +=1
 			print("training finished")
