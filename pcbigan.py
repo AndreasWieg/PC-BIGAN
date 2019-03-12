@@ -57,7 +57,7 @@ class PCBIGAN(object):
 			y = tf.layers.dense(y, 126,name = "enc_output")
 		return y
 
-
+	'''
 	def generator(self,x):
 		with tf.variable_scope("generator") as scope:
 			x = tf.layers.dense(x, 126, activation=None,kernel_initializer=tf.contrib.layers.xavier_initializer(),name= "gen_1")
@@ -73,6 +73,16 @@ class PCBIGAN(object):
 			x = tf.layers.dense(x, 3084, activation=None,kernel_initializer=tf.contrib.layers.xavier_initializer(),name= "gen_6")
 			x = tf.reshape(x,[-1,1028,3])
 		return x
+		'''
+
+	def generator(self,x):
+		with tf.variable_scope("generator") as scope:
+			x = tf.reshape(x,[-1,42,3])
+			x = tf.contrib.nn.conv1d_transpose(x,filter=[1,84,3],output_shape=[-1,128,3],stride=1,padding="same",data_format= "NWC",name= "gen_1")
+			x = tf.contrib.nn.conv1d_transpose(x,filter=[1,256,3],output_shape=[-1,256,3],stride=1,padding="same",data_format= "NWC",name= "gen_3")
+			x = tf.contrib.nn.conv1d_transpose(x,filter=[1,512,3],output_shape=[-1,512,3],stride=1,padding="same",data_format= "NWC",name= "gen_4")
+			x = tf.contrib.nn.conv1d_transpose(x,filter=[1,1028,3],output_shape=[-1,1028,3],stride=1,padding="same",data_format= "NWC",name= "gen_1")
+		return x
 
 
 	def discriminator(self,y,x,reuse=False):
@@ -81,9 +91,9 @@ class PCBIGAN(object):
 				scope.reuse_variables()
 			x = tf.reshape(x,[-1,42,3])
 			y = tf.concat([y,x],1)
-			y = tf.layers.conv1d(y,filters = 64,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu)
-			y = tf.layers.conv1d(y,filters = 128,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu)
-			y = tf.layers.conv1d(y,filters = 64,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu)
+			y = tf.layers.conv1d(y,filters = 64,kernel_size=1,strides=1,padding="same",activation=tf.nn.leaky_relu)
+			y = tf.layers.conv1d(y,filters = 128,kernel_size=1,strides=1,padding="same",activation=tf.nn.leaky_relu)
+			y = tf.layers.conv1d(y,filters = 64,kernel_size=1,strides=1,padding="same",activation=tf.nn.leaky_relu)
 			y = tf.layers.flatten(y)
 			y = tf.layers.dense(y, 1028,activation=tf.nn.leaky_relu, name="conv_2last")
 			y = tf.layers.dense(y, 128,activation=tf.nn.leaky_relu, name="conv_1last")
