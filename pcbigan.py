@@ -44,23 +44,33 @@ class PCBIGAN(object):
 
 	def encoder(self,y):
 		with tf.variable_scope("encoder") as scope:
-			y = tf.layers.conv1d(y,filters = 64,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu,name = "enc_1")
-			y = tf.layers.conv1d(y,filters = 64,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu,name = "enc_2")
-			y = tf.layers.conv1d(y,filters = 64,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu, name = "enc_3")
-			y = tf.layers.conv1d(y,filters = 64,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu, name = "enc_4")
+			y = tf.layers.conv1d(y,filters = 64,kernel_size=1,strides=1,padding="same",activation=tf.nn.leaky_relu,name = "enc_1")
+			y = tf.layers.batch_normalization(y,momentum=0.99,epsilon=0.001)
+			y = tf.layers.conv1d(y,filters = 128,kernel_size=1,strides=1,padding="same",activation=tf.nn.leaky_relu,name = "enc_2")
+			y = tf.layers.batch_normalization(y,momentum=0.99,epsilon=0.001)
+			y = tf.layers.conv1d(y,filters = 256,kernel_size=1,strides=1,padding="same",activation=tf.nn.leaky_relu, name = "enc_3")
+			y = tf.layers.batch_normalization(y,momentum=0.99,epsilon=0.001)
+			y = tf.layers.conv1d(y,filters = 512,kernel_size=1,strides=1,padding="same",activation=tf.nn.leaky_relu, name = "enc_4")
+			y = tf.layers.batch_normalization(y,momentum=0.99,epsilon=0.001)
+			y = tf.reduce_max(y,axis = 1)
 			y = tf.layers.flatten(y)
-			y = tf.layers.dense(y, 128, activation=None,kernel_initializer = tf.constant_initializer(0.2),name = "enc_output")
+			y = tf.layers.dense(y, 126,name = "enc_output")
 		return y
 
 
 	def generator(self,x):
 		with tf.variable_scope("generator") as scope:
-			x = tf.layers.dense(x, 128, activation=tf.nn.leaky_relu,name= "gen_1")
-			x = tf.layers.dense(x, 256, activation=tf.nn.leaky_relu,name= "gen_2")
-			x = tf.layers.dense(x, 512, activation=tf.nn.leaky_relu,name= "gen_3")
-			x = tf.layers.dense(x, 1024, activation=tf.nn.leaky_relu,name= "gen_4")
-			x = tf.layers.dense(x, 2048, activation=tf.nn.leaky_relu,name= "gen_5")
-			x = tf.layers.dense(x, 3084, activation=None,kernel_initializer = tf.constant_initializer(0.2),name= "gen_6")
+			x = tf.layers.dense(x, 126, activation=None,kernel_initializer=tf.contrib.layers.xavier_initializer(),name= "gen_1")
+			x =tf.layers.batch_normalization(x,momentum=0.99,epsilon=0.001)
+			x = tf.layers.dense(x, 256, activation=None,kernel_initializer=tf.contrib.layers.xavier_initializer(),name= "gen_2")
+			x = tf.layers.batch_normalization(x,momentum=0.99,epsilon=0.001)
+			x = tf.layers.dense(x, 512, activation=None,kernel_initializer=tf.contrib.layers.xavier_initializer(),name= "gen_3")
+			x = tf.layers.batch_normalization(x,momentum=0.99,epsilon=0.001)
+			x = tf.layers.dense(x, 1024, activation=None,kernel_initializer=tf.contrib.layers.xavier_initializer(),name= "gen_4")
+			x = tf.layers.batch_normalization(x,momentum=0.99,epsilon=0.001)
+			x = tf.layers.dense(x, 2048, activation=None,kernel_initializer=tf.contrib.layers.xavier_initializer(),name= "gen_5")
+			x = tf.layers.batch_normalization(x,momentum=0.99,epsilon=0.001)
+			x = tf.layers.dense(x, 3084, activation=None,kernel_initializer=tf.contrib.layers.xavier_initializer(),name= "gen_6")
 			x = tf.reshape(x,[-1,1028,3])
 		return x
 
@@ -69,10 +79,12 @@ class PCBIGAN(object):
 		with tf.variable_scope("discriminator") as scope:
 			if reuse:
 				scope.reuse_variables()
+			x = tf.reshape(x,[-1,42,3])
+			y = tf.concat([y,x],1)
 			y = tf.layers.conv1d(y,filters = 64,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu)
 			y = tf.layers.conv1d(y,filters = 128,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu)
-			y = tf.layers.conv1d(y,filters = 256,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu)
 			y = tf.layers.conv1d(y,filters = 64,kernel_size=3,strides=1,padding="same",activation=tf.nn.leaky_relu)
+			y = tf.layers.flatten(y)
 			y = tf.layers.dense(y, 1028,activation=tf.nn.leaky_relu, name="conv_2last")
 			y = tf.layers.dense(y, 128,activation=tf.nn.leaky_relu, name="conv_1last")
 			y = tf.layers.dense(y, 1, activation=tf.nn.sigmoid,name="conv_last")
@@ -100,18 +112,15 @@ class PCBIGAN(object):
 
 
 		#Vanilla BI-GAN Loss
-		self.d_loss = tf.reduce_mean(-tf.log(self.Dis_encoder) - tf.log(1. - self.Dis_generator))
-		self.g_loss = tf.reduce_mean(-tf.log(self.Dis_generator) - tf.log(1 - self.Dis_encoder))
+		self.d_loss = tf.reduce_mean(-tf.log(self.Dis_encoder) - tf.log(1.0 - self.Dis_generator))
+		self.g_loss = tf.reduce_mean(-tf.log(self.Dis_generator) - tf.log(1.0 - self.Dis_encoder))
 
 		tf.summary.scalar('self.g_loss', self.g_loss )
 		tf.summary.scalar('self.d_loss', self.d_loss )
 
 		#collect generator and encoder variables
 		t_vars = tf.trainable_variables()
-		self.vars_G_E = [var for var in t_vars if 'gen' or "enc" in var.name]
-
-		#self.vars_G = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='generator')
-		#self.vars_E = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='encoder')
+		self.vars_G_E = [var for var in t_vars if 'gen' in var.name or "enc" in var.name]
 		self.vars_D = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='discriminator')
 
 
@@ -136,12 +145,12 @@ class PCBIGAN(object):
 			self.start_time = time.time()
 			loss_g_val,loss_d_val = 0, 0
 			self.training_data = self.training_data[0:(self.batch_size*k)]
-
+			test_counter = 0
 			print("Lengh of the training_data:")
 			print(len(self.training_data))
 			for e in range(0,self.epoch):
 				epoch_loss_d = 0.
-				epoch_loss_g = 0.				
+				epoch_loss_g = 0.
 				self.training_data = shuffle_data(self.training_data)
 				for i in range(0,k):
 					self.batch_z = np.random.uniform(0, 0.2, [self.batch_size, self.z_dim])
@@ -159,19 +168,15 @@ class PCBIGAN(object):
 				print("Loss of G: %f" % epoch_loss_g)
 				print("Epoch%d" %(e))
 
-
-				test_counter = 0
-				if e % 100 == 0:
+				if e % 10 == 0:
 					#save_path = self.saver.save(sess,"C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/checkpoint/model.ckpt",global_step=e)
 					#print("model saved: %s" %save_path)
 					self.gen_noise = np.random.uniform(0, 0.2, [1, self.z_dim])
 					code = sess.run([self.Enc], feed_dict={self.input: [self.batch[0]]})
 					code = np.asarray(code)
-					print(code.shape)
-					code = np.reshape(code,(1,128))
+					code = np.reshape(code,(1,self.z_dim))
 					generator_output = sess.run([self.Gen], feed_dict={self.z: code})
 					save_pointcloud(self.batch[0],test_counter,"input_encoder", self.pointcloud_dim)
 					save_pointcloud(generator_output,test_counter,"encoder_encoder", self.pointcloud_dim)
-					print("created test_data")
 					test_counter +=1
 			print("training finished")
